@@ -1,0 +1,1 @@
+web: python3 src/master_run_all.py

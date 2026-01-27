@@ -1,0 +1,88 @@
+"""docstring for dlt_strava_bigquery_extn.py, 
+   a DLT source for Strava data, 
+   which can be loaded into BigQuery.
+"""
+from typing import Any #,Optional
+import os
+
+import dlt # pylint: disable=import-error
+# from dlt.sources.helpers.rest_client.paginators import PageNumberPaginator # pylint: disable=import-error
+from dlt.common.pendulum import pendulum # pylint: disable=import-error
+from dlt.sources.rest_api import ( # pylint: disable=import-error
+    RESTAPIConfig,
+    check_connection,
+    rest_api_resources,
+    # rest_api_source,
+)
+
+@dlt.source(name="strava")
+def strava_source() -> Any:
+# def strava_source(access_token: Optional[str] = dlt.secrets.value) -> Any:
+    """this function defines the Strava source for DLT.
+    It uses the DLT REST API source functionality to connect to Strava's API."""
+    # === manually fetch the secrets dict ===
+    sec = dlt.secrets.get("sources.strava")
+    access_token  = sec["access_token"]
+
+    config: RESTAPIConfig = {
+        "client": {
+            "base_url": "https://www.strava.com/api/v3/",
+            "auth": (
+                {
+                    "type": "bearer",
+                    "token": access_token,
+                } if access_token else None
+            ),
+        },
+        "resource_defaults": {
+            "primary_key": "id",
+            "write_disposition": {"disposition": "merge", "strategy": "upsert"},
+            "endpoint": {
+                "params": {
+                    "per_page": 200 # Strava API supports max 200 per page
+                },
+            },
+        },
+        "resources": [
+            {
+                "name": "activities",
+                "endpoint": {
+                    "path": "athlete/activities",
+                    "params": {
+                        "per_page": 200 # Strava API supports max 200 per page
+                    },
+                },
+            }
+        ],
+    }
+    # print("Access token in use:", access_token)
+
+    yield from rest_api_resources(config)
+
+def load_strava() -> None:
+    """this function initializes the DLT pipeline 
+    and runs it to load Strava data into BigQuery."""
+    pipeline = dlt.pipeline(
+        pipeline_name="strava_pipeline",
+        destination="bigquery",
+        dataset_name="landing",
+    )
+
+    client_id = os.getenv("SOURCES__STRAVA__CLIENT_ID")
+    if not client_id:
+        raise ValueError("Missing SOURCES__STRAVA__CLIENT_ID env var")
+
+    # dlt automatically looks for env vars in format SOURCES__<SOURCE_NAME>__<KEY>
+    # so with the names you already have, this works without extra code:
+    source = strava()                   # ← dlt reads credentials from env automatically
+
+    can_connect, error = check_connection(strava, "activities")
+
+    if not can_connect:
+        raise RuntimeError(f"Cannot connect to Strava API: {error}")
+
+    load_info = pipeline.run(strava)
+    print(load_info)
+
+if __name__ == "__main__":
+    load_strava()

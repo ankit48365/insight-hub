@@ -1,0 +1,11 @@
+[project]
+name = "insight-hub"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dlt[bigquery,rest]>=1.21.0",
+    "google-cloud-run>=0.15.0",
+    "google-cloud-secret-manager>=2.26.0",
+]
