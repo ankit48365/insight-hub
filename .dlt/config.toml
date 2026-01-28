@@ -1,5 +1,9 @@
 # This file configures the general behavior of dlt
 
+[destination.bigquery]
+location = "northamerica-northeast1"
+
+
 [runtime]
 # Instruct dlt to use Google Secret Manager as the default secrets provider.
 # The project_id below must have the Secret Manager API enabled.

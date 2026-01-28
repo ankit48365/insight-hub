@@ -7,7 +7,10 @@ __pycache__/
 *.so
 
 # Ankit
-
+temp_secret.toml
+secrets.toml
+.dlt/
+*.toml
 *.log
 *.out
 *.pid

@@ -1,6 +1,17 @@
 from typing import Any
 import dlt
 from dlt.sources.rest_api import RESTAPIConfig, rest_api_resources, check_connection
+import os
+
+def get_strava_token():
+    # 1. Try Cloud Run env var
+    token = os.getenv("SOURCES__STRAVA__ACCESS_TOKEN")
+    if token:
+        return token
+
+    # 2. Fallback to local dlt_secrets.toml
+    sec = dlt.secrets.get("sources.strava")
+    return sec["access_token"]
 
 
 @dlt.source(name="strava")
@@ -8,7 +19,8 @@ def strava_source() -> Any:
     """DLT source for Strava REST API."""
     
     sec = dlt.secrets.get("sources.strava")
-    access_token = sec["access_token"]
+    access_token = get_strava_token()
+
 
     config: RESTAPIConfig = {
         "client": {

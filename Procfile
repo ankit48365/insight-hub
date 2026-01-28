@@ -1,1 +1,1 @@
-web: python3 src/master_run_all.py
+web: python3 master_run_all.py

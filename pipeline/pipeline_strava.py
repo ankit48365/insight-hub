@@ -1,5 +1,7 @@
 import dlt
 from api_source.strava_api import strava_source 
+# from dlt.sources.helpers.rest_client.paginators import BasePaginator
+# from dlt.sources.helpers.rest_client.auth import AuthToken
 
 def load_strava() -> None:
     """
