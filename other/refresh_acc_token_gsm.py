@@ -48,33 +48,24 @@ def refresh_access_token():
         print(f"Response: {response.text}")
         return False
 
-def update_secrets_file(access_token, refresh_token, client_id, client_secret):
-    """Updates the DLT secrets file with the new tokens."""
-    temp_secret_path = ".dlt/temp_secret.toml"
-    
-    lines = [
-        "[sources.strava]",
-        f'access_token  = "{access_token}"',
-        f'refresh_token = "{refresh_token}"',
-        f'client_id     = "{client_id}"',
-        f'client_secret = "{client_secret}"',
-        ""
-    ]
-    
-    os.makedirs(os.path.dirname(temp_secret_path), exist_ok=True)
-    with open(temp_secret_path, "w") as f:
-        f.write("\n".join(lines))
-    
-    print(f"✅ Updated {temp_secret_path} with new credentials.")
 
 ###################################################################
 ## add for cloud secret manager
 # to fake cloud environment, run before pythonn code run >> export K_SERVICE="fake" or export K_SERVICE="strava-job"
 # to unset run from terminal >> unset K_SERVICE
 
-
 def is_running_in_cloud():
-    return os.getenv("K_SERVICE") is not None  # Cloud Run sets this
+    # Cloud Run Service
+    if os.getenv("K_SERVICE"):
+        return True
+
+    # Cloud Run Job
+    if os.getenv("CLOUD_RUN_JOB"):
+        return True
+
+    return False
+
+
 
 from google.cloud import secretmanager
 
@@ -96,12 +87,14 @@ def update_cloud_secret(secret_name: str, new_value: str, project_id: str):
 
 def update_secrets_file(access_token, refresh_token, client_id, client_secret):
     if is_running_in_cloud():
+        print("Updating secrets in Google Secret Manager...")
         # Update secrets in Google Secret Manager
         project_id = os.getenv("GOOGLE_CLOUD_PROJECT") or "mystrava-464501"
-        update_cloud_secret("strava_access_token", access_token, project_id)
-        update_cloud_secret("strava_refresh_token", refresh_token, project_id)
+        update_cloud_secret("SOURCES__STRAVA__ACCESS_TOKEN", access_token, project_id)
+        update_cloud_secret("SOURCES__STRAVA__REFRESH_TOKEN", refresh_token, project_id)
         # Optional: update client_id/client_secret if needed
     else:
+        print("writing to local file ./dlt/temp_secret.toml")
         """Updates the DLT secrets file with the new tokens."""
         temp_secret_path = ".dlt/temp_secret.toml"
     
@@ -127,3 +120,25 @@ if __name__ == "__main__":
         print("🎉 Token refresh successful! You can now run your pipeline.")
     else:
         print("💥 Token refresh failed. You may need to re-authorize.")
+
+
+### below was old method, which used to just write on temp_secrets.toml , the one in use above has if condition to check either cloud vairables 
+
+# def update_secrets_file(access_token, refresh_token, client_id, client_secret):
+#     """Updates the DLT secrets file with the new tokens."""
+#     temp_secret_path = ".dlt/temp_secret.toml"
+    
+#     lines = [
+#         "[sources.strava]",
+#         f'access_token  = "{access_token}"',
+#         f'refresh_token = "{refresh_token}"',
+#         f'client_id     = "{client_id}"',
+#         f'client_secret = "{client_secret}"',
+#         ""
+#     ]
+    
+#     os.makedirs(os.path.dirname(temp_secret_path), exist_ok=True)
+#     with open(temp_secret_path, "w") as f:
+#         f.write("\n".join(lines))
+    
+#     print(f"✅ Updated {temp_secret_path} with new credentials.")

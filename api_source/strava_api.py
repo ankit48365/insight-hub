@@ -2,12 +2,19 @@ from typing import Any
 import dlt
 from dlt.sources.rest_api import RESTAPIConfig, rest_api_resources, check_connection
 import os
+from google.cloud import secretmanager
+
 
 def get_strava_token():
     # 1. Try Cloud Run env var
-    token = os.getenv("SOURCES__STRAVA__ACCESS_TOKEN")
+    # token = os.getenv("SOURCES__STRAVA__ACCESS_TOKEN")
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/mystrava-464501/secrets/SOURCES__STRAVA__ACCESS_TOKEN/versions/latest"
+    response = client.access_secret_version(request={"name": name})
+    token = response.payload.data.decode("UTF-8")
     if token:
         return token
+   
 
     # 2. Fallback to local dlt_secrets.toml
     sec = dlt.secrets.get("sources.strava")
