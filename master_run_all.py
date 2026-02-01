@@ -6,6 +6,8 @@ from other.refresh_acc_token_gsm import refresh_access_token as refresh_token
 
 from pipeline.pipeline_weather import load_weather
 from pipeline.pipeline_astro import load_astro
+from pipeline.pipeline_news import load_news
+
 
 def run_all():
 
@@ -17,6 +19,8 @@ def run_all():
     load_weather()
     print("starting astro api extract...")
     load_astro()
+    print("starting news rss feed extract...")
+    load_news()
     print("Pipeline completed.")
 
 if __name__ == "__main__":

@@ -37,7 +37,7 @@ def strava_source() -> Any:
                     "type": "bearer",
                     "token": access_token,
                 } if access_token else None
-            ),
+            ), 
         },
         "resource_defaults": {
             "primary_key": "id",
